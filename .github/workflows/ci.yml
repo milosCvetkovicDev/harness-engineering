@@ -1,0 +1,60 @@
+name: CI
+
+# Runs the checks this repository owns: the link check on what git holds, every test file and the
+# typecheck. It needs no API key: the lab tests talk to a local fake.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    name: Links, tests and typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # A treeless clone without stored credentials. A later git command cannot fetch what this
+      # clone left out, so a step that reads history needs checkout settings of its own.
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          filter: tree:0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: labs/package-lock.json
+
+      # Before anything is installed. Here the checkout holds only what git holds, which is the
+      # check the publication boundary asks for. After `npm ci` a link into labs/node_modules
+      # would resolve on the runner and be dead on GitHub.
+      - name: Relative links
+        run: node tools/check-links.mjs .
+
+      - name: Install the lab dependencies
+        id: install
+        working-directory: labs
+        run: npm ci
+
+      # Every test file in the repository. The ones listed in the "exclude" of labs/tsconfig.ci.json
+      # are red on purpose (a lab's acceptance tests, written before the learner's code); they do
+      # not fail the run, and one that has turned green does, until it is taken off the list.
+      # Each step below runs even when the one before it failed, so one push reports every problem.
+      - name: Tests
+        if: ${{ !cancelled() }}
+        run: node tools/run-tests.mjs
+
+      # The same list keeps the red-on-purpose tests out of the typecheck. It needs the install.
+      - name: Typecheck
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        working-directory: labs
+        run: npm run typecheck:ci

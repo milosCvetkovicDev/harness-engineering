@@ -1,0 +1,30 @@
+# dependencies and build output
+node_modules/
+dist/
+
+# secrets: the API key lives in .env, never in git
+.env
+.env.*
+!.env.example
+
+# session state (per machine, not part of the curriculum)
+.remember/
+CLAUDE.local.md
+**/.claude/checkpoints/
+**/.claude/settings.local.json
+
+# what the learner fills in (notes, log, drafts), and anything derived from a Claude Code set-up
+private/
+
+# study material that stays on this machine and is never published: raw research notes and the
+# research report (unverified quotations), and chapter notes on the companion book
+research_notes/
+reports/
+resources/book-notes/
+
+# lab run output (transcripts and eval results can hold prompts and tool output)
+.runs/
+
+# OS and editor noise
+.DS_Store
+*.log

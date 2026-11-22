@@ -1,0 +1,24 @@
+{
+  "name": "harness-engineering-labs",
+  "private": true,
+  "type": "module",
+  "description": "Lab workspace for the harness engineering course. TypeScript runs directly on Node, no build step.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "smoke": "node --env-file-if-exists=.env 00-smoke/smoke.ts",
+    "test:smoke": "node --test 00-smoke/smoke.test.ts",
+    "model": "node --env-file-if-exists=.env --input-type=module -e \"import { MODEL } from './lib/config.ts'; console.log(MODEL)\"",
+    "wire": "node --env-file-if-exists=.env 01-wire/wire.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:ci": "tsc --noEmit -p tsconfig.ci.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}
